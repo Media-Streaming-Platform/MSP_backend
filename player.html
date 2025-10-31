@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <body>
+    <video id="video" controls width="640"></video>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+      const video = document.getElementById('video');
+      const playlist = 'http://localhost:4000/hls/VIDEO_ID/playlist.m3u8'; // replace VIDEO_ID
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(playlist);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // native HLS (Safari)
+        video.src = playlist;
+        video.addEventListener('loadedmetadata', () => video.play());
+      } else {
+        alert('HLS not supported in this browser');
+      }
+    </script>
+  </body>
+</html>
