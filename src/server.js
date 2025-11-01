@@ -1,11 +1,13 @@
 const express = require('express')
 const path = require('path')
+const cors = require('cors')
 const connectMongoAtlas = require('./config/db')
 
 const app = express()
 const port = 3000
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors())
 app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
 app.use(express.json())
 app.use(express.json({extended: false}))
