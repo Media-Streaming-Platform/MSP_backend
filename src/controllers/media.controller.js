@@ -66,7 +66,10 @@ const createMedia = async (req, res) => {
 const getAllMedia = async (req, res) => {
   try {
     const mediaList = await Media.find().populate("categories", "name").sort({ createdAt: -1 });
-    res.json(mediaList);
+    const audioCount = await Media.countDocuments({ type: "audio" });
+    const videoCount = await Media.countDocuments({ type: "video" });
+
+    res.json({ mediaList, audioCount, videoCount });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -121,10 +124,25 @@ const deleteMedia = async (req, res) => {
   }
 };
 
+// Get media by category
+const getMediaByCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mediaList = await Media.find({ categories: id })
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
+    res.json(mediaList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createMedia,
   getAllMedia,
   getMediaById,
   updateMedia,
   deleteMedia,
+  getMediaByCategory,
 };

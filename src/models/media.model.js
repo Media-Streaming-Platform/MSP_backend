@@ -12,6 +12,9 @@ const mediaSchema = new mongoose.Schema({
 
   filePath: { type: String, required: true },
 
+  numberOfViews: { type: Number, default: 0 },
+  thumbnail: { type: String },
+
   // Upload details
   isPublished: { type: Boolean, default: false },
 

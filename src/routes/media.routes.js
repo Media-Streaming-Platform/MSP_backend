@@ -2,7 +2,11 @@ const express = require("express");
 const router = express.Router();
 const {
   createMedia,
-  getMediaById
+  getAllMedia,
+  getMediaById,
+  getMediaByCategory,
+  updateMedia,
+  deleteMedia,
 } = require("../controllers/media.controller");
 const upload = require('../middleware/uploads')
 
@@ -19,5 +23,10 @@ router.post(
   createMedia
 );
 router.get('/get-by-id/:id', getMediaById)
+router.get('/get-by-category/:id', getMediaByCategory)
+router.get('/get-all', getAllMedia)
+
+router.put('/update-media/:id', updateMedia)
+router.delete('/delete-media/:id', deleteMedia)
 
 module.exports = router;
