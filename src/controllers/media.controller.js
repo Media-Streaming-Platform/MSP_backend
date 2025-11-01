@@ -20,7 +20,7 @@ const createMedia = async (req, res) => {
     const uploadedFilePath = req.files.file[0].path;
     const mediaFileName = path.basename(uploadedFilePath, path.extname(uploadedFilePath));
     const hlsOutputDirectory = path.join(__dirname, "..", "uploads", "hls", mediaFileName);
-    const hlsMasterPlaylistPath = path.join(hlsOutputDirectory, "master.m3u8");
+    const hlsMasterPlaylistPath = `/uploads/hls/${mediaFileName}/master.m3u8`; // Store as relative URL
 
     // Create HLS output directory if it doesn't exist
     if (!fs.existsSync(hlsOutputDirectory)) {
@@ -112,7 +112,7 @@ const createMedia = async (req, res) => {
 
       let thumbnailPath = null;
       if (req.files.thumbnail && req.files.thumbnail.length > 0) {
-        thumbnailPath = req.files.thumbnail[0].path;
+        thumbnailPath = `/uploads/thumbnail/${path.basename(req.files.thumbnail[0].path)}`; // Store as relative URL
       }
 
       const newMedia = new Media({

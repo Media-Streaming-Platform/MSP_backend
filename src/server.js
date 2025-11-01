@@ -9,6 +9,7 @@ const port = 3000
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors())
 app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
+app.use('/uploads/thumbnail', express.static(path.join(__dirname, 'uploads', 'thumbnail')));
 app.use(express.json())
 app.use(express.json({extended: false}))
 
