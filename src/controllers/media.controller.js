@@ -15,7 +15,7 @@ const createMedia = async (req, res) => {
 
     if (!req.files || !req.files.file || req.files.file.length === 0) {
       return res.status(400).json({ message: "Media file is required" });
-    }
+    } 
 
     const uploadedFilePath = req.files.file[0].path;
     const mediaFileName = path.basename(uploadedFilePath, path.extname(uploadedFilePath));
@@ -43,12 +43,86 @@ const createMedia = async (req, res) => {
         else console.log("Original file deleted:", uploadedFilePath);
       });
 
+      let transcription = null;
+      // Removed Google Speech-to-Text API integration for now
+      /*
+      const audioExtractionPath = path.join(__dirname, "..", "uploads", "audio", `${mediaFileName}.flac`);
+
+      // Ensure audio directory exists
+      if (!fs.existsSync(path.dirname(audioExtractionPath))) {
+        fs.mkdirSync(path.dirname(audioExtractionPath), { recursive: true });
+      }
+
+      let audioSourcePath = uploadedFilePath; // Default to original file
+
+      // If it's a video, extract audio for transcription
+      if (type === "video") {
+        const audioExtractionCommand = `ffmpeg -i "${uploadedFilePath}" -vn -acodec flac "${audioExtractionPath}"`;
+        await new Promise((resolve, reject) => {
+          exec(audioExtractionCommand, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Audio extraction error: ${error.message}`);
+              return reject(new Error("Failed to extract audio for transcription"));
+            }
+            console.log(`Audio extraction stdout: ${stdout}`);
+            console.error(`Audio extraction stderr: ${stderr}`);
+            audioSourcePath = audioExtractionPath;
+            resolve();
+          });
+        });
+      }
+
+      // Perform speech-to-text transcription
+      try {
+        const audioBytes = fs.readFileSync(audioSourcePath).toString('base64');
+
+        const audio = {
+          content: audioBytes,
+        };
+        const config = {
+          encoding: 'FLAC', // Or appropriate for your audio
+          sampleRateHertz: 44100, // Common for audio files, adjust if needed
+          languageCode: 'en-US',
+          enableWordTimeOffsets: false,
+        };
+        const request = {
+          audio: audio,
+          config: config,
+        };
+
+        const [response] = await client.recognize(request);
+        transcription = response.results
+          .map(result => result.alternatives[0].transcript)
+          .join('\n');
+        console.log("Transcription:", transcription);
+
+        // Delete the temporary audio file if it was extracted
+        if (audioSourcePath === audioExtractionPath) {
+          fs.unlink(audioExtractionPath, (err) => {
+            if (err) console.error("Error deleting temporary audio file:", err);
+            else console.log("Temporary audio file deleted:", audioExtractionPath);
+          });
+        }
+
+      } catch (transcriptionError) {
+        console.error("Google Speech-to-Text API error:", transcriptionError);
+        // Continue without transcription if API fails, or send error response
+      }
+      */
+
+      let thumbnailPath = null;
+      if (req.files.thumbnail && req.files.thumbnail.length > 0) {
+        thumbnailPath = req.files.thumbnail[0].path;
+      }
+
       const newMedia = new Media({
         title,
         description,
         type,
         categories: category._id,
         filePath: hlsMasterPlaylistPath, // Store the HLS master playlist path
+        thumbnail: thumbnailPath,
+        transcription: transcription,
         isPublished: true,
       });
 
@@ -138,6 +212,32 @@ const getMediaByCategory = async (req, res) => {
   }
 };
 
+// Get all audios
+const getAllAudios = async (req, res) => {
+  try {
+    const audioList = await Media.find({ type: "audio" })
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
+    res.json(audioList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all videos
+const getAllVideos = async (req, res) => {
+  try {
+    const videoList = await Media.find({ type: "video" })
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
+    res.json(videoList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createMedia,
   getAllMedia,
@@ -145,4 +245,6 @@ module.exports = {
   updateMedia,
   deleteMedia,
   getMediaByCategory,
+  getAllAudios,
+  getAllVideos,
 };
