@@ -11,15 +11,25 @@ const createMedia = async (req, res) => {
 
     // Validate category
     const category = await Category.findById(categoryId);
-    if (!category) return res.status(400).json({ message: "Invalid category ID" });
+    if (!category)
+      return res.status(400).json({ message: "Invalid category ID" });
 
     if (!req.files || !req.files.file || req.files.file.length === 0) {
       return res.status(400).json({ message: "Media file is required" });
-    } 
+    }
 
     const uploadedFilePath = req.files.file[0].path;
-    const mediaFileName = path.basename(uploadedFilePath, path.extname(uploadedFilePath));
-    const hlsOutputDirectory = path.join(__dirname, "..", "uploads", "hls", mediaFileName);
+    const mediaFileName = path.basename(
+      uploadedFilePath,
+      path.extname(uploadedFilePath)
+    );
+    const hlsOutputDirectory = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "hls",
+      mediaFileName
+    );
     const hlsMasterPlaylistPath = `/uploads/hls/${mediaFileName}/master.m3u8`; // Store as relative URL
 
     // Create HLS output directory if it doesn't exist
@@ -32,7 +42,12 @@ const createMedia = async (req, res) => {
     exec(ffmpegCommand, async (error, stdout, stderr) => {
       if (error) {
         console.error(`FFmpeg conversion error: ${error.message}`);
-        return res.status(500).json({ message: "Server error", error: "Failed to convert media to HLS" });
+        return res
+          .status(500)
+          .json({
+            message: "Server error",
+            error: "Failed to convert media to HLS",
+          });
       }
       console.log(`FFmpeg stdout: ${stdout}`);
       console.error(`FFmpeg stderr: ${stderr}`);
@@ -112,7 +127,9 @@ const createMedia = async (req, res) => {
 
       let thumbnailPath = null;
       if (req.files.thumbnail && req.files.thumbnail.length > 0) {
-        thumbnailPath = `/uploads/thumbnail/${path.basename(req.files.thumbnail[0].path)}`; // Store as relative URL
+        thumbnailPath = `/uploads/thumbnail/${path.basename(
+          req.files.thumbnail[0].path
+        )}`; // Store as relative URL
       }
 
       const newMedia = new Media({
@@ -128,7 +145,9 @@ const createMedia = async (req, res) => {
 
       await newMedia.save();
 
-      res.status(201).json({ message: "Media uploaded successfully", media: newMedia });
+      res
+        .status(201)
+        .json({ message: "Media uploaded successfully", media: newMedia });
     });
   } catch (error) {
     console.error(error);
@@ -139,7 +158,9 @@ const createMedia = async (req, res) => {
 // Get all media
 const getAllMedia = async (req, res) => {
   try {
-    const mediaList = await Media.find().populate("categories", "name").sort({ createdAt: -1 });
+    const mediaList = await Media.find()
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
     const audioCount = await Media.countDocuments({ type: "audio" });
     const videoCount = await Media.countDocuments({ type: "video" });
 
@@ -152,7 +173,10 @@ const getAllMedia = async (req, res) => {
 // Get media by ID
 const getMediaById = async (req, res) => {
   try {
-    const media = await Media.findById(req.params.id).populate("categories", "name");
+    const media = await Media.findById(req.params.id).populate(
+      "categories",
+      "name"
+    );
     if (!media) return res.status(404).json({ message: "Media not found" });
     res.json(media);
   } catch (error) {
@@ -171,7 +195,8 @@ const updateMedia = async (req, res) => {
     if (description) media.description = description;
     if (categoryId) {
       const category = await Category.findById(categoryId);
-      if (!category) return res.status(400).json({ message: "Invalid category ID" });
+      if (!category)
+        return res.status(400).json({ message: "Invalid category ID" });
       media.categories = category._id;
     }
 
@@ -185,13 +210,9 @@ const updateMedia = async (req, res) => {
 // Delete media
 const deleteMedia = async (req, res) => {
   try {
-    const media = await Media.findById(req.params.id);
+    //use findByIdAndDelete
+    const media = await Media.findByIdAndDelete(req.params.id);
     if (!media) return res.status(404).json({ message: "Media not found" });
-
-    // Optional: delete from Vimeo if video
-    // client.request({ method: 'DELETE', path: `/videos/${media.vimeoVideoId}` }, ...)
-
-    await media.remove();
     res.json({ message: "Media deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
