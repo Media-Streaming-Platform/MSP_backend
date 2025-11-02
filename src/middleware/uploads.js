@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ["video/mp4", "audio/mpeg", "audio/mp3"];
+  const allowed = ["video/mp4", "audio/mpeg", "audio/mp3", "image/png"];
   if (!allowed.includes(file.mimetype)) {
     return cb(new Error("Only MP4 and MP3 files are allowed!"), false);
   }

@@ -19,6 +19,7 @@ router.post(
     { name: "description", maxCount: 1 },
     { name: "type", maxCount: 1 },
     { name: "categoryId", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 },
   ]),
   createMedia
 );

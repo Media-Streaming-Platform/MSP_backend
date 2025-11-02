@@ -3,64 +3,82 @@ const Category = require("../models/category.model");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
+const cloudinary = require('../config/cloudnaryConfig');
+
+
+async function uploadFile(file) {
+  try {
+    if (!file) throw new Error("No file provided");
+
+    // Determine resource type
+    let resourceType = "image"; // default
+    if (file.mimetype.startsWith("video")) resourceType = "video";
+    else if (file.mimetype.startsWith("audio")) resourceType = "raw";
+
+    const result = await cloudinary.uploader.upload( file.path, {
+      resource_type: resourceType,
+    });
+
+    // Delete local temp file
+    fs.unlink(file.path, (err) => {
+      if (err) console.error("Failed to delete temp file:", err);
+    });
+
+    console.log("File uploaded successfully:", result.secure_url);
+    return result.secure_url;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw new Error(error.message || "Cloudinary upload failed");
+  }
+}
+
+
 
 // Create media (video/audio)
 const createMedia = async (req, res) => {
   try {
-    const { title, description, type, categoryId } = req.body;
-
+   // console.log("--", req);
+    const {title, description, type, categoryId } = req.body;
+  
     // Validate category
+    console.log(categoryId)
     const category = await Category.findById(categoryId);
     if (!category) return res.status(400).json({ message: "Invalid category ID" });
 
     if (!req.files || !req.files.file || req.files.file.length === 0) {
       return res.status(400).json({ message: "Media file is required" });
     }
+    
+    // const uploadedFilePath = req.files.file[0].path;
+    // const mediaFileName = path.basename(uploadedFilePath, path.extname(uploadedFilePath));
+    // const hlsOutputDirectory = path.join(__dirname, "..", "uploads", "hls", mediaFileName);
+    // const hlsMasterPlaylistPath = path.join(hlsOutputDirectory, "master.m3u8");
+    // console.log("f", req.files);
+    // console.log("f", req.files.file[0]);
+    // console.log(req.files.file[0].mimetype);
+    // return
+    const filePath = await uploadFile(req.files.file[0]);
+    const thumbnailPath = await uploadFile(req.files.thumbnail[0]);
 
-    const uploadedFilePath = req.files.file[0].path;
-    const mediaFileName = path.basename(uploadedFilePath, path.extname(uploadedFilePath));
-    const hlsOutputDirectory = path.join(__dirname, "..", "uploads", "hls", mediaFileName);
-    const hlsMasterPlaylistPath = path.join(hlsOutputDirectory, "master.m3u8");
-
-    // Create HLS output directory if it doesn't exist
-    if (!fs.existsSync(hlsOutputDirectory)) {
-      fs.mkdirSync(hlsOutputDirectory, { recursive: true });
-    }
-
-    const ffmpegCommand = `ffmpeg -i "${uploadedFilePath}" -codec:v libx264 -preset veryfast -crf 23 -codec:a aac -b:a 128k -f hls -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${hlsOutputDirectory}/%03d.ts" "${hlsMasterPlaylistPath}"`;
-
-    exec(ffmpegCommand, async (error, stdout, stderr) => {
-      if (error) {
-        console.error(`FFmpeg conversion error: ${error.message}`);
-        return res.status(500).json({ message: "Server error", error: "Failed to convert media to HLS" });
-      }
-      console.log(`FFmpeg stdout: ${stdout}`);
-      console.error(`FFmpeg stderr: ${stderr}`);
-
-      // Delete the original uploaded file after successful conversion
-      fs.unlink(uploadedFilePath, (err) => {
-        if (err) console.error("Error deleting original file:", err);
-        else console.log("Original file deleted:", uploadedFilePath);
-      });
 
       const newMedia = new Media({
         title,
         description,
         type,
         categories: category._id,
-        filePath: hlsMasterPlaylistPath, // Store the HLS master playlist path
+        filePath: filePath, // Store the HLS master playlist path
         isPublished: true,
+        thumbnail:thumbnailPath
       });
 
       await newMedia.save();
-
-      res.status(201).json({ message: "Media uploaded successfully", media: newMedia });
-    });
+      res.status(200).json({nessage: "Media saved"})
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 // Get all media
 const getAllMedia = async (req, res) => {
