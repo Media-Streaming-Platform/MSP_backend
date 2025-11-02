@@ -43,7 +43,8 @@ const createMedia = async (req, res) => {
     // Validate category
     console.log(categoryId)
     const category = await Category.findById(categoryId);
-    if (!category) return res.status(400).json({ message: "Invalid category ID" });
+    if (!category)
+      return res.status(400).json({ message: "Invalid category ID" });
 
     if (!req.files || !req.files.file || req.files.file.length === 0) {
       return res.status(400).json({ message: "Media file is required" });
@@ -83,7 +84,9 @@ const createMedia = async (req, res) => {
 // Get all media
 const getAllMedia = async (req, res) => {
   try {
-    const mediaList = await Media.find().populate("categories", "name").sort({ createdAt: -1 });
+    const mediaList = await Media.find()
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
     const audioCount = await Media.countDocuments({ type: "audio" });
     const videoCount = await Media.countDocuments({ type: "video" });
 
@@ -96,7 +99,10 @@ const getAllMedia = async (req, res) => {
 // Get media by ID
 const getMediaById = async (req, res) => {
   try {
-    const media = await Media.findById(req.params.id).populate("categories", "name");
+    const media = await Media.findById(req.params.id).populate(
+      "categories",
+      "name"
+    );
     if (!media) return res.status(404).json({ message: "Media not found" });
     res.json(media);
   } catch (error) {
@@ -115,7 +121,8 @@ const updateMedia = async (req, res) => {
     if (description) media.description = description;
     if (categoryId) {
       const category = await Category.findById(categoryId);
-      if (!category) return res.status(400).json({ message: "Invalid category ID" });
+      if (!category)
+        return res.status(400).json({ message: "Invalid category ID" });
       media.categories = category._id;
     }
 
@@ -129,13 +136,9 @@ const updateMedia = async (req, res) => {
 // Delete media
 const deleteMedia = async (req, res) => {
   try {
-    const media = await Media.findById(req.params.id);
+    //use findByIdAndDelete
+    const media = await Media.findByIdAndDelete(req.params.id);
     if (!media) return res.status(404).json({ message: "Media not found" });
-
-    // Optional: delete from Vimeo if video
-    // client.request({ method: 'DELETE', path: `/videos/${media.vimeoVideoId}` }, ...)
-
-    await media.remove();
     res.json({ message: "Media deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -156,6 +159,32 @@ const getMediaByCategory = async (req, res) => {
   }
 };
 
+// Get all audios
+const getAllAudios = async (req, res) => {
+  try {
+    const audioList = await Media.find({ type: "audio" })
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
+    res.json(audioList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all videos
+const getAllVideos = async (req, res) => {
+  try {
+    const videoList = await Media.find({ type: "video" })
+      .populate("categories", "name")
+      .sort({ createdAt: -1 });
+    res.json(videoList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createMedia,
   getAllMedia,
@@ -163,4 +192,6 @@ module.exports = {
   updateMedia,
   deleteMedia,
   getMediaByCategory,
+  getAllAudios,
+  getAllVideos,
 };

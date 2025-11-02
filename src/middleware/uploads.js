@@ -4,11 +4,18 @@ const path = require("path");
 
 // Folder to temporarily store uploaded media
 const uploadPath = path.join(__dirname, "..", "uploads");
+const thumbnailUploadPath = path.join(uploadPath, "thumbnail");
+
 if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+if (!fs.existsSync(thumbnailUploadPath)) fs.mkdirSync(thumbnailUploadPath, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadPath);
+    if (file.fieldname === "thumbnail") {
+      cb(null, thumbnailUploadPath);
+    } else {
+      cb(null, uploadPath);
+    }
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

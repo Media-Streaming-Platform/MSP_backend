@@ -7,6 +7,8 @@ const {
   getMediaByCategory,
   updateMedia,
   deleteMedia,
+  getAllAudios,
+  getAllVideos,
 } = require("../controllers/media.controller");
 const upload = require('../middleware/uploads')
 
@@ -26,6 +28,9 @@ router.post(
 router.get('/get-by-id/:id', getMediaById)
 router.get('/get-by-category/:id', getMediaByCategory)
 router.get('/get-all', getAllMedia)
+
+router.get('/audios', getAllAudios)
+router.get('/videos', getAllVideos)
 
 router.put('/update-media/:id', updateMedia)
 router.delete('/delete-media/:id', deleteMedia)
